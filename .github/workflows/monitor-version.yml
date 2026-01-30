@@ -28,6 +28,7 @@ jobs:
       - name: Check Proto Fleet version
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.PROTO_FLEET_PAT }}
         run: |
           bash check-version.sh
       

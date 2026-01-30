@@ -31,7 +31,11 @@ warn() {
 
 # Fetch latest release from GitHub
 log "Fetching latest Proto Fleet release..."
-RELEASE_DATA=$(curl -s "$GITHUB_API")
+if [ -n "$GITHUB_TOKEN" ]; then
+    RELEASE_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$GITHUB_API")
+else
+    RELEASE_DATA=$(curl -s "$GITHUB_API")
+fi
 
 # Check if API call was successful
 if [ -z "$RELEASE_DATA" ] || echo "$RELEASE_DATA" | grep -q "Not Found"; then
