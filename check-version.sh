@@ -38,13 +38,27 @@ else
 fi
 
 # Check if API call was successful
-if [ -z "$RELEASE_DATA" ] || echo "$RELEASE_DATA" | grep -q "Not Found"; then
-    error "Failed to fetch release data from GitHub API"
+if [ -z "$RELEASE_DATA" ]; then
+    error "Failed to fetch release data from GitHub API (empty response)"
+    exit 1
+fi
+
+# Check for API errors
+if echo "$RELEASE_DATA" | grep -q '"message"'; then
+    API_MESSAGE=$(echo "$RELEASE_DATA" | jq -r '.message // "Unknown error"' 2>/dev/null || echo "Unknown error")
+    error "GitHub API error: $API_MESSAGE"
+    echo "$RELEASE_DATA"
     exit 1
 fi
 
 # Extract release information
-NEW_VERSION=$(echo "$RELEASE_DATA" | jq -r '.tag_name // "unknown"')
+NEW_VERSION=$(echo "$RELEASE_DATA" | jq -r '.tag_name // "unknown"' 2>&1)
+if [ $? -ne 0 ]; then
+    error "Failed to parse release data with jq"
+    echo "First 500 chars of response:"
+    echo "$RELEASE_DATA" | head -c 500
+    exit 1
+fi
 RELEASE_NAME=$(echo "$RELEASE_DATA" | jq -r '.name // ""')
 RELEASE_URL=$(echo "$RELEASE_DATA" | jq -r '.html_url // ""')
 RELEASE_DATE=$(echo "$RELEASE_DATA" | jq -r '.published_at // ""')
